@@ -1,16 +1,18 @@
-import React from "react";
-import { Route, Navigate } from "react-router-dom";
-import { useAuth } from "../views/UserDashboard/AuthContext";
+import { Navigate, Outlet } from "react-router-dom";
+import useUserProfile from "../components/hooks/fetchProfile";
 
-const PrivateRoute = ({ element: Component, ...rest }) => {
-  const { user } = useAuth();
+const ProtectedRoute = ({ adminOnly = false }) => {
+  const { user, loading } = useUserProfile();
+  console.log(user);
 
-  return (
-    <Route
-      {...rest}
-      element={user ? <Component /> : <Navigate to="/login" replace />}
-    />
-  );
+  if (loading) return <div>Loading...</div>;
+
+  if (!user) return <Navigate to="/" replace />;
+
+  if (adminOnly && ![2, 3].includes(user.role))
+    return <Navigate to="/not-authorized" replace />;
+
+  return <Outlet />;
 };
 
-export default PrivateRoute;
+export default ProtectedRoute;

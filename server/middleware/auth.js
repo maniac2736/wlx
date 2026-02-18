@@ -1,30 +1,24 @@
 const jwt = require("jsonwebtoken");
 
 const jwtMiddleware = (req, res, next) => {
-  const token = req.cookies.jwt;
+  let token = req.cookies.jwt;
 
   if (!token) {
-    // Check Authorization header as fallback
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith("Bearer ")) {
+    if (authHeader && authHeader.startsWith("Bearer "))
       token = authHeader.substring(7);
-    }
   }
 
-  if (!token) {
+  if (!token)
     return res.status(401).json({ message: "Unauthorized - Missing token" });
-  }
 
   try {
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decodedToken.userId;
+    req.user = { userId: decodedToken.userId, role: decodedToken.role };
     next();
   } catch (error) {
     console.error("Error decoding token:", error);
-    return res.status(401).json({
-      message: "Unauthorized - Invalid token",
-      error: error.message,
-    });
+    return res.status(401).json({ message: "Unauthorized - Invalid token" });
   }
 };
 

@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
@@ -13,7 +11,6 @@ const LoginForm = () => {
     password: "",
   });
 
-  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,136 +19,186 @@ const LoginForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  const validate = () => {
-    const validationErrors = {};
-
-    if (!formData.username.trim()) {
-      validationErrors.username = "Username is required";
-    }
-
-    if (!formData.password) {
-      validationErrors.password = "Password is required";
-    }
-
-    setErrors(validationErrors);
-    return Object.keys(validationErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validate()) return;
+    if (!formData.username || !formData.password) {
+      return toast.error("Please fill in all fields");
+    }
 
     try {
       setIsSubmitting(true);
-
       const result = await loginUser(formData);
 
       if (result?.success) {
         dispatch(addUser(result.data));
-        toast.success("Login successful");
-        navigate("/app");
+        toast.success("Welcome back!");
+
+        switch (result.data.role) {
+          case 1:
+            navigate("/app/home");
+            break;
+          case 2:
+          case 3:
+            navigate("/admin/dashboard");
+            break;
+          default:
+            navigate("/app/home");
+        }
       } else {
-        toast.error(result?.message || "Invalid username or password");
-        setFormData({ username: "", password: "" });
+        toast.error(result?.message || "Invalid credentials");
       }
     } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Connection failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container min-vh-100 d-flex align-items-center justify-content-center">
-      <div className="col-12 col-sm-10 col-md-6 col-lg-4">
-        <div className="card shadow-lg border-0 rounded-4">
-          <div className="card-body p-4 p-md-5">
-            <h3 className="text-center mb-4 fw-semibold">Sign in</h3>
+    <div className="bg-white min-vh-100">
+      {/* Navbar */}
+      <nav className="navbar navbar-light bg-white border-bottom px-4 py-3">
+        <div className="container-fluid d-flex justify-content-between align-items-center">
+          <Link to="/" className="navbar-brand fw-bold text-dark p-0">
+            <i className="bi bi-shield-lock-fill me-2"></i> Wallo SecureGate
+          </Link>
+          <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+            System Access: Protected
+          </span>
+        </div>
+      </nav>
 
-            <form onSubmit={handleSubmit} noValidate>
-              {/* Username */}
-              <div className="mb-3">
-                <label htmlFor="username" className="form-label">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  type="text"
-                  name="username"
-                  className={`form-control ${
-                    errors.username ? "is-invalid" : ""
-                  }`}
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  autoComplete="username"
-                />
-                {errors.username && (
-                  <div className="invalid-feedback">{errors.username}</div>
-                )}
-              </div>
+      <div className="container py-5 mt-lg-5">
+        <div className="row justify-content-center">
+          <div className="col-12 col-md-8 col-lg-5 col-xl-4">
+            {/* Title Section */}
+            <div className="text-center mb-5">
+              <h2 className="fw-bold text-dark mb-2">Sign in</h2>
+              <p className="text-muted">
+                Enter your details to access your dashboard.
+              </p>
+            </div>
 
-              {/* Password */}
-              <div className="mb-4">
-                <label htmlFor="password" className="form-label">
-                  Password
-                </label>
-                <div className="input-group">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    className={`form-control ${
-                      errors.password ? "is-invalid" : ""
-                    }`}
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    aria-label="Toggle password visibility"
-                  >
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                  </button>
-                  {errors.password && (
-                    <div className="invalid-feedback d-block">
-                      {errors.password}
+            <div className="card border-0 shadow-sm rounded-4 p-2">
+              <div className="card-body p-4">
+                <form onSubmit={handleSubmit}>
+                  {/* Username Field */}
+                  <div className="mb-4">
+                    <label className="form-label fw-semibold mb-1">
+                      Username
+                    </label>
+                    <div className="input-group border rounded-3 focus-ring-custom">
+                      <span className="input-group-text bg-transparent border-0 text-muted">
+                        <i className="bi bi-person"></i>
+                      </span>
+                      <input
+                        type="text"
+                        name="username"
+                        className="form-control border-0 shadow-none py-2"
+                        placeholder="your_username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="mb-4">
+                    <div className="d-flex justify-content-between">
+                      <label className="form-label fw-semibold mb-1">
+                        Password
+                      </label>
+                      {/* Redirects to Forgot Password Page */}
+                      <Link
+                        to="/forgot-password"
+                        className="text-decoration-none small text-muted hover-primary"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <div className="input-group border rounded-3 focus-ring-custom">
+                      <span className="input-group-text bg-transparent border-0 text-muted">
+                        <i className="bi bi-lock"></i>
+                      </span>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        className="form-control border-0 shadow-none py-2"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn bg-transparent border-0 text-muted"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        <i
+                          className={`bi ${
+                            showPassword ? "bi-eye-slash" : "bi-eye"
+                          }`}
+                        ></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="btn btn-dark w-100 py-2 fw-bold rounded-3 shadow-sm mb-3"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </button>
+
+                  <div className="text-center">
+                    <p className="text-muted small mb-0">
+                      New to the platform?{" "}
+                      <Link
+                        to="/register"
+                        className="text-dark fw-bold text-decoration-none"
+                      >
+                        Create an account
+                      </Link>
+                    </p>
+                  </div>
+                </form>
               </div>
+            </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                className="btn btn-primary w-100 py-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Signing in..." : "Login"}
-              </button>
-            </form>
-
-            <div className="text-center mt-4">
-              <small className="text-muted">
-                Don’t have an account?{" "}
-                <Link to="/register" className="fw-medium">
-                  Register
-                </Link>
-              </small>
+            {/* Security Note */}
+            <div className="mt-5 text-center">
+              <div className="d-flex align-items-center justify-content-center text-muted small">
+                <i className="bi bi-shield-shaded me-2"></i>
+                End-to-end encrypted session management
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        .focus-ring-custom:focus-within {
+          border-color: #0d6efd !important;
+          box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+        }
+        .form-control::placeholder {
+          color: #adb5bd;
+          font-size: 0.9rem;
+        }
+        .hover-primary:hover {
+          color: #0d6efd !important;
+        }
+      `}</style>
     </div>
   );
 };
